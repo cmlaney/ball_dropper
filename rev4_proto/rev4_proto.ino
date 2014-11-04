@@ -22,6 +22,8 @@
 #define SYRINGEENCODE2 2
 #define SYRINGEABOLUTEMAX 1000
 
+#define DELAYBETWEENEXEC 5000
+
 #define LED1 A3
 #define LED2 A2
 
@@ -121,6 +123,12 @@ void loop() {
         int i = 0;
         for(i = 0; i<val; i++) {
           rotateWheel(FORWARD);
+          Serial.print("Rotated ");
+          Serial.println(i);
+          if (abortFlag){
+              Serial.println("Could not rotate.");
+              return;
+          } 
           delay(nextVal);
         }
       } else if(val == 1) {
@@ -172,6 +180,8 @@ void loop() {
   }
 }
 
+
+
 void reset() {
   digitalWrite(DRIVEMOTORFORWARDCONTROLPIN, LOW);
   digitalWrite(DRIVEMOTORREVERSECONTROLPIN, LOW);
@@ -183,42 +193,43 @@ void reset() {
 
 void execute(int count) {
   if(!abortFlag) {
-  int i;
-  for(i=0; i<count; i++) 
-  {
-    Serial.print("Preparing to drop ball: "); 
-    Serial.println(++dropCount);
-    digitalWrite(LED1, HIGH);
-    driveBall(FORWARD);
-    digitalWrite(LED1, LOW);
-    Serial.print("Injecting ball: "); 
-    Serial.println(dropCount);
-    digitalWrite(LED2, HIGH);
-    if(!abortFlagInject) {
-      inject();
-    }
-    digitalWrite(LED2, LOW);
-    Serial.print("Retracting ball: "); 
-    Serial.println(dropCount);
-    driveBall(BACKWARD);
-    delay(500);
-    Serial.print("Dropping ball: "); 
-    Serial.println(dropCount);
-    if(!abortFlagRetract) {
-      rotateWheel(1);
-      if(abortFlag) {
-        reset();
-        Serial.println("Wheel jammed, land now.");
-        return;
+    int i;
+    for(i=0; i<count; i++) 
+    {      
+      Serial.print("Preparing to drop ball: "); 
+      Serial.println(++dropCount);
+      digitalWrite(LED1, HIGH);
+      delay(DELAYBETWEENEXEC);
+      driveBall(FORWARD);
+      digitalWrite(LED1, LOW);
+      Serial.print("Injecting ball: "); 
+      Serial.println(dropCount);
+      digitalWrite(LED2, HIGH);
+      if(!abortFlagInject) {
+        inject();
       }
-    } else {
-      Serial.println("IT'S ON FIRE!");
+      digitalWrite(LED2, LOW);
+      Serial.print("Retracting ball: "); 
+      Serial.println(dropCount);
+      driveBall(BACKWARD);
+      delay(500);
+      Serial.print("Dropping ball: "); 
+      Serial.println(dropCount);
+      if(!abortFlagRetract) {
+        rotateWheel(1);
+        if(abortFlag) {
+          reset();
+          Serial.println("Wheel jammed, land now.");
+          return;
+        }
+      } else {
+        Serial.println("IT'S ON FIRE!");
+      }
     }
-  }
-  } else {
-    Serial.println("Wheel jammed, land now.");
-    return;
-  }
+    } else {
+      Serial.println("Wheel jammed, land now.");
+      return;
+    }
 }
 
 //###########################################################
@@ -235,7 +246,10 @@ void rotateWheel(int dir) {
     int rotateSafetyDelay = 1000;
 
     digitalWrite(ROTATEMOTORFORWARDCONTROLPIN, HIGH);
-    delay(600);
+    //delay(300);
+    while(! (digitalRead(ROTATEMOTORLIMIT)))
+      delay(10);
+    
     while(digitalRead(ROTATEMOTORLIMIT)||digitalRead(ROTATEMOTORLIMIT)) 
     {
       digitalWrite(LED1, HIGH);
@@ -255,11 +269,12 @@ void rotateWheel(int dir) {
     digitalWrite(ROTATEMOTORREVERSECONTROLPIN, HIGH);
     while(digitalRead(ROTATEMOTORLIMIT)) 
     {
-      delay(10); 
+      //delay(10); 
     }
     digitalWrite(ROTATEMOTORREVERSECONTROLPIN, LOW);
     digitalWrite(LED1, LOW); 
   } 
+  // REVERSE ROTATE - DO NOT USE
   else {
     digitalWrite(ROTATEMOTORREVERSECONTROLPIN, HIGH);
     delay(50);
@@ -407,7 +422,7 @@ void help() {
   Serial.println("Commands for ball dropper:");
   Serial.println("--------------------------");
   Serial.println("e numOfBalls : Drops numOfBalls");
-  Serial.println("r dir        : Rotates wheel forward if dir = 1,");
+  Serial.println("r [n [m]]    : Rotates wheel forward n times for m millis. Default n is 1, default m is 0.");
   Serial.println("               backward if dir = -1 WARNING: BACKWARD WILL BEND LIMIT SWITCH!");
   Serial.println("d dir        : Drives ball forward if dir = 1,");
   Serial.println("               backward if dir = -1");
