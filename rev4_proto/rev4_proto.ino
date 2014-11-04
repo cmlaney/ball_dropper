@@ -1,4 +1,3 @@
-
 #include <avr/io.h>
 #include <PinChangeInt.h>
 
@@ -226,8 +225,8 @@ void rotateWheel(int dir) {
     int rotateSafetyDelay = 1000;
 
     digitalWrite(ROTATEMOTORFORWARDCONTROLPIN, HIGH);
-    delay(300);
-    while(digitalRead(ROTATEMOTORLIMIT)) 
+    delay(600);
+    while(digitalRead(ROTATEMOTORLIMIT)||digitalRead(ROTATEMOTORLIMIT)) 
     {
       digitalWrite(LED1, HIGH);
       if(millis()-rotateStart > rotateSafetyDelay) 
@@ -237,7 +236,7 @@ void rotateWheel(int dir) {
         error("Rotate failed.\n");
         return;
       }
-      delay(10);
+      //delay(10);
     }
     digitalWrite(LED1, LOW);
 
@@ -283,10 +282,9 @@ void driveBall(int dir) {
     if(driveState) {
       Serial.print("Backing off");
       while(!digitalRead(DRIVEMOTORLIMIT)) {
-        delay(1);
-        
+        delay(1);        
       }
-      Serial.println(" done looping");
+      Serial.println("Done sensing backing");
     }
     delay(10);
 
@@ -315,6 +313,7 @@ void driveBall(int dir) {
       while(!digitalRead(DRIVEMOTORLIMIT)) {
         delay(1);
       }
+      Serial.println("Done sensing backing.");
     }
     delay(10);
     while(digitalRead(DRIVEMOTORLIMIT)) 
@@ -447,10 +446,6 @@ int getState(int A, int B) {
     }
   }
 }
-
-
-
-
 
 
 
