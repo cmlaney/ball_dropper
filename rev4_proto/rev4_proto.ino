@@ -113,7 +113,17 @@ void loop() {
     else if(cmd == 'r') 
     {
       int val = Serial.parseInt(); 
-      if(val == 1) {
+      if (val > 1) {
+        int nextVal = Serial.parseInt();
+        Serial.print("Rotating ");
+        Serial.print(val);
+        Serial.println(" times.");
+        int i = 0;
+        for(i = 0; i<val; i++) {
+          rotateWheel(FORWARD);
+          delay(nextVal);
+        }
+      } else if(val == 1) {
         Serial.println("Rotating forward.");
         rotateWheel(FORWARD);
       } 
@@ -273,7 +283,7 @@ void rotateWheel(int dir) {
 void driveBall(int dir) {
 
   long driveStart = millis();
-  int driveSafetyDelay = 5000;
+  int driveSafetyDelay = 4000;
 
   if(dir == FORWARD) 
   {
